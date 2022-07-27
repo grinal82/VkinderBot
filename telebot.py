@@ -4,15 +4,13 @@ import logging
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.bot import api
 
-logging.basicConfig(level=logging.INFO)
-log = logging.getLogger('aiogram')
-
 load_dotenv()
 
 API_TOKEN = os.getenv("Telegram_API_TOKEN")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
+# log = logging.getLogger('aiogram')
 
 # Initialize bot and dispatcher
 bot = Bot(token=API_TOKEN)
