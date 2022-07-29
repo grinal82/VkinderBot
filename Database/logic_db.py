@@ -48,6 +48,7 @@ def get_name(num):
     session.close()
 
 
+# Получение адреса в вк по id пользователя
 def get_url(num):
     Session = sessionmaker(bind=engine)
     session = Session()
@@ -62,6 +63,7 @@ def __str__(value):
     return f'{value}'
 
 
+# Получение фото по id пользователя
 def get_photos(num):
     Session = sessionmaker(bind=engine)
     session = Session()
@@ -98,6 +100,7 @@ def get_all_info(num):
     return content_dir
 
 
+# Удаление пользователя по id
 def delete_info(num):
     Session = sessionmaker(bind=engine)
     session = Session()
