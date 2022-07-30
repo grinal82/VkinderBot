@@ -4,6 +4,9 @@ from dotenv import load_dotenv
 import vk_api
 from vk_api.longpoll import VkLongPoll, VkEventType
 from VKbot import VkBot
+import datetime
+
+td = datetime.datetime.now().date()
 
 
 def write_msg(user_id, message):
@@ -19,6 +22,42 @@ def write_msg(user_id, message):
             'message': message,
             'random_id': random.randint(0, 2048)
         })
+
+
+def info_on_city(user_id):
+
+    info = vk.method('users.get', {
+        'user_id': user_id,
+        'fields': 'city',
+    })
+    city = info[0]['city']['title']
+    print(f'Пользователь из города: {city}')
+
+
+def info_on_sex(user_id):
+
+    info = vk.method('users.get', {
+        'user_id': user_id,
+        'fields': 'sex',
+    })
+    sex = info[0]['sex']
+    print(f'Половая принадлежность пользователя: {sex}')
+
+
+def info_on_age(user_id):
+
+    info = vk.method('users.get', {
+        'user_id': user_id,
+        'fields': 'bdate',
+    })
+    bdate = info[0]['bdate']
+    print(f'Пользователь родился: {bdate}')
+    year = int(bdate.split(".")[2])
+    month = int(bdate.split(".")[1])
+    day = int(bdate.split(".")[0])
+    bd = datetime.date(year, month, day)
+    age_years = int((td - bd).days / 365.25)
+    print(f'Пользователю {age_years} лет')
 
 
 load_dotenv()
@@ -43,3 +82,6 @@ for event in longpoll.listen():
             bot = VkBot(event.user_id)
 
             write_msg(event.user_id, bot.new_message(event.text))
+            info_on_city(event.user_id)
+            info_on_sex(event.user_id)
+            info_on_age(event.user_id)
