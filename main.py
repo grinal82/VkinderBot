@@ -60,6 +60,15 @@ def info_on_age(user_id):
     print(f'Пользователю {age_years} лет')
 
 
+def search_friends():
+    users = vk.method('users.search', {
+        'sort': '0',
+        'city': 'Тула',
+        'sex': '0'
+    })
+    print(users).json()
+
+
 load_dotenv()
 # получаем созданный ранее токен
 token = os.getenv("VK_API_TOKEN")
@@ -85,3 +94,4 @@ for event in longpoll.listen():
             info_on_city(event.user_id)
             info_on_sex(event.user_id)
             info_on_age(event.user_id)
+            search_friends()
