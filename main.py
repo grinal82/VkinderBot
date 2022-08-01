@@ -32,8 +32,8 @@ def write_msg(user_id, message, keyboard=None):
 
 
 #  функция чтобы отправлять фото
-def send_photo(user_id, attachment):
-    attachment = image_uploader(url: str)
+def send_photo(user_id):
+    attachment = image_uploader()
     vk.method(
         'messages.send', {
             'user_id': user_id,
@@ -52,8 +52,8 @@ uploader = vk_api.upload.VkUpload(vk)
 
 
 #  формирование аттачмент для отправки через send_photo
-def image_uploader(url: str):
-    image = uploader.photo_messages(url)
+def image_uploader():
+    image = uploader.photo_messages('me.jpg')
     media_id = str(image[0]['id'])
     owner_id = str(image[0]['owner_id'])
     attachment = f'photo{owner_id}_{media_id}'
@@ -90,4 +90,5 @@ with DBsession() as db_sesion:
                 text = event.text.lower()
                 write_msg(event.user_id, bot.new_message(event.text), keyboard)
                 bot.search_all(event.user_id)
+                send_photo(event.user_id)
                 # bot.get_photo()
