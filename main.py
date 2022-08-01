@@ -32,11 +32,12 @@ def write_msg(user_id, message, keyboard=None):
 
 
 #  функция чтобы отправлять фото
-def send_photo(user_id, url):
+def send_photo(user_id, attachment):
+    attachment = image_uploader()
     vk.method(
         'messages.send', {
             'user_id': user_id,
-            'attachment': url,
+            'attachment': attachment,
             'random_id': random.randint(0, 2048)
         })
 
@@ -47,6 +48,17 @@ token = os.getenv("VK_API_TOKEN")
 
 # Авторизуемся как группа VK
 vk = vk_api.VkApi(token=token)
+uploader = vk_api.upload.VkUpload(vk)
+
+
+#  формирование аттачмент для отправки через send_photo
+def image_uploader(url: str):
+    image = uploader.photo_messages(url)
+    media_id = str(image[0]['id'])
+    owner_id = str(image[0]['id'])
+    attachment = f'photo{owner_id}_{media_id}'
+    return attachment
+
 
 # Работа с сообщениями
 longpoll = VkLongPoll(vk)
