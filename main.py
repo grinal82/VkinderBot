@@ -33,7 +33,7 @@ def write_msg(user_id, message, keyboard=None):
 
 #  функция чтобы отправлять фото
 def send_photo(user_id, attachment):
-    attachment = image_uploader()
+    attachment = image_uploader(url: str)
     vk.method(
         'messages.send', {
             'user_id': user_id,
@@ -55,7 +55,7 @@ uploader = vk_api.upload.VkUpload(vk)
 def image_uploader(url: str):
     image = uploader.photo_messages(url)
     media_id = str(image[0]['id'])
-    owner_id = str(image[0]['id'])
+    owner_id = str(image[0]['owner_id'])
     attachment = f'photo{owner_id}_{media_id}'
     return attachment
 
