@@ -6,6 +6,7 @@ from pprint import pprint
 import datetime
 import vk_api
 import json
+import time
 
 load_dotenv()
 
@@ -19,7 +20,7 @@ pers_token = os.getenv("PersonalToken")
 vk = vk_api.VkApi(token=token)
 version = '5.131'
 
-NUMBER_OF_PHOTOS = 10
+NUMBER_OF_PHOTOS = 3
 HOST = r'https://api.vk.com'
 
 
@@ -115,6 +116,7 @@ class VkBot:
         user_sex = self.info_on_sex(user_id)
         user_age_to = self.info_on_age(user_id)
         user_age_from = user_age_to - 10
+        # user_id_list = []
         if user_sex == 2:
             user_sex -= 1
         elif user_sex == 1:
@@ -141,45 +143,52 @@ class VkBot:
             'count': count
         }
         url = f'{HOST}/method/users.search'
-        req = requests.get(url, params=params).json()
+        response = requests.get(url, params=params).json()
+        time.sleep(0.3)
         offset += count
-        per_info = req['response']['items']
-
+        per_info = response['response']['items']
         for info in per_info:
             data_on_user = {}
             data_on_user['id'] = info['id']
             data_on_user['first_name'] = info['first_name']
             data_on_user['last_name'] = info['last_name']
+            data_on_user['account_type'] = info['is_closed']
             json_to_save.append(data_on_user)
-        pprint(json_to_save)
-        with open('data.json', 'w') as write_file:
-            json.dump(json_to_save, write_file, indent=4)
+            pprint(json_to_save)
+            with open('data.json', 'w') as write_file:
+                json.dump(json_to_save, write_file, indent=4)
 
     @staticmethod
     def get_photo():
         with open('data.json') as f:
             data = json.load(f)
-
-            temp_dict = {}
             for i in data:
                 VK_USER_ID = i.get('id')
                 first_name = i.get('first_name')
                 last_name = i.get('last_name')
+                account_type = i.get('account_type')
                 params = {
                     'owner_id': VK_USER_ID,
                     'access_token': pers_token,
                     'v': '5.131',
                     'album_id': 'profile',
                     'extended': '1',
-                    # 'photo_sizes': '1',
+                    'photo_sizes': '1',
                     'count': NUMBER_OF_PHOTOS
                 }
                 url = f'{HOST}/method/photos.get'
+                if account_type == False:
+                    response = requests.get(url, params).json()
+                    time.sleep(0.3)
+                    items = response['response']['items']
+                    # print(response)
+                    for x in items:
+                        for k, v in x.items():
+                            if k == 'sizes':
+                                x['sizes'] = v[-1]
 
-                response = requests.get(url, params).json()
-                # items = response['response']['items']
-                # most_popular = items['likes']['count'] + items['comments'][
-                #     'count']
-                # items.sort(key=most_popular)
-                # most_liked = items[-3:]
-                # print(most_liked)
+                    for x in items[
+                            -3:]:  # Выводим ссылки последних 3 фотографий с наибольшим количеством лайков
+
+                        url = (x['sizes']['url'])
+                        return url
