@@ -1,6 +1,8 @@
 import random
 import os
+from unittest import result
 from dotenv import load_dotenv
+from requests import request
 import vk_api
 from vk_api.longpoll import VkLongPoll, VkEventType
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
@@ -10,6 +12,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import orm
 from Database import models
 from Database.logic_db import create_tables
+from io import BytesIO
+import requests
 
 
 def write_msg(user_id, message, keyboard=None):
@@ -33,7 +37,7 @@ def write_msg(user_id, message, keyboard=None):
 
 #  функция чтобы отправлять фото
 def send_photo(user_id):
-    attachment = image_uploader()
+    attachment = image_uploader(bot.get_photo())
     vk.method(
         'messages.send', {
             'user_id': user_id,
@@ -52,8 +56,10 @@ uploader = vk_api.upload.VkUpload(vk)
 
 
 #  формирование аттачмент для отправки через send_photo
-def image_uploader():
-    image = uploader.photo_messages('me.jpg')
+def image_uploader(url):
+    result = requests.get(url).content
+    img = BytesIO(result)
+    image = uploader.photo_messages(img)
     media_id = str(image[0]['id'])
     owner_id = str(image[0]['owner_id'])
     attachment = f'photo{owner_id}_{media_id}'
@@ -90,5 +96,5 @@ with DBsession() as db_sesion:
                 text = event.text.lower()
                 write_msg(event.user_id, bot.new_message(event.text), keyboard)
                 bot.search_all(event.user_id)
+                bot.get_photo()
                 send_photo(event.user_id)
-                # bot.get_photo()
