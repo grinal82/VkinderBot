@@ -1,8 +1,6 @@
 import random
 import os
-from unittest import result
 from dotenv import load_dotenv
-from requests import request
 import vk_api
 from vk_api.longpoll import VkLongPoll, VkEventType
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
@@ -11,9 +9,10 @@ import sqlalchemy
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import orm
 from Database import models
-from Database.logic_db import create_tables
+from Database.logic_db import create_tables, add_info
 from io import BytesIO
 import requests
+import json
 
 
 def write_msg(user_id, message, keyboard=None):
@@ -37,13 +36,35 @@ def write_msg(user_id, message, keyboard=None):
 
 #  функция чтобы отправлять фото
 def send_photo(user_id):
-    attachment = image_uploader(bot.get_photo())
-    vk.method(
-        'messages.send', {
-            'user_id': user_id,
-            'attachment': attachment,
-            'random_id': random.randint(0, 2048)
-        })
+    with open('data.json', 'r') as f:
+        data = json.load(f)
+        count = 0
+        for info in data:
+            while count <= len(info['photo_link']):
+                photo = info['photo_link'][count]
+                # count += 1
+
+                url = "".join(photo)
+                attachment = image_uploader(url)
+                vk.method(
+                    'messages.send', {
+                        'user_id': user_id,
+                        'attachment': attachment,
+                        'random_id': random.randint(0, 2048)
+                    })
+                count += 1
+            else:
+                continue
+
+
+def get_info_on_person():
+    with open('data.json', 'r') as f:
+        data = json.load(f)
+        for info in data:
+            name = "{} {}".format(info['last_name'], info['first_name'])
+            url = info['profile_link']
+            print(f'{name}\n{url}')
+        return f'{name}\n{url}\n'
 
 
 load_dotenv()
@@ -78,7 +99,6 @@ DSN = f"postgresql://{login}:{password}@localhost:5432/{db_name}"
 engine = sqlalchemy.create_engine(DSN)
 DBsession = orm.sessionmaker(bind=engine)
 
-# create_tables(engine)
 print("Server started")
 with DBsession() as db_sesion:
     for event in longpoll.listen():
@@ -95,6 +115,9 @@ with DBsession() as db_sesion:
                 keyboard.add_button("Поехали!", VkKeyboardColor.PRIMARY)
                 text = event.text.lower()
                 write_msg(event.user_id, bot.new_message(event.text), keyboard)
+
                 bot.search_all(event.user_id)
-                bot.get_photo()
+                write_msg(event.user_id, get_info_on_person(), keyboard)
                 send_photo(event.user_id)
+                # send_photo(event.user_id)
+                # send_photo(event.user_id)

@@ -1,3 +1,4 @@
+from xml import dom
 import bs4 as bs4
 import requests
 from dotenv import load_dotenv
@@ -7,6 +8,7 @@ import datetime
 import vk_api
 import json
 import time
+from Database.logic_db import add_info
 
 load_dotenv()
 
@@ -134,7 +136,7 @@ class VkBot:
             'sort':
             1,  # Cортировка результатов по популярности. Будем предлагать для знакомства сначала самых популярных пользователей.
             'offset': offset,
-            'fields': {'domain', 'photo_max'},
+            'fields': 'domain',
             'has_photo': 1,  # Ищем только пользователей с фотографией
             'status': {
                 1, 5, 6
@@ -148,47 +150,53 @@ class VkBot:
         offset += count
         per_info = response['response']['items']
         for info in per_info:
+            profile_url = 'https://vk.com/'
             data_on_user = {}
             data_on_user['id'] = info['id']
             data_on_user['first_name'] = info['first_name']
             data_on_user['last_name'] = info['last_name']
             data_on_user['account_type'] = info['is_closed']
+            domain = info['domain']
+            data_on_user['profile_link'] = f'{profile_url}{domain}'
+            data_on_user['photo_link'] = []
             json_to_save.append(data_on_user)
-            pprint(json_to_save)
+            # pprint(json_to_save)
+
+            params2 = {
+                'owner_id': info['id'],
+                'access_token': pers_token,
+                'v': '5.131',
+                'album_id': 'profile',
+                'extended': '1',
+                'photo_sizes': '1',
+                'count': NUMBER_OF_PHOTOS
+            }
+            url = f'{HOST}/method/photos.get'
+            urls = []
+            if info['is_closed'] == False:
+                response = requests.get(url, params2).json()
+                time.sleep(0.3)
+                items = response['response']['items']
+                # print(response)
+                for x in items:
+                    for k, v in x.items():
+                        if k == 'sizes':
+                            x['sizes'] = v[-1]
+
+                for x in items[
+                        -3:]:  # Выводим ссылки последних 3 фотографий с наибольшим количеством лайков
+
+                    url = (x['sizes']['url'])
+                    urls.append(url)
+            data_on_user['photo_link'] = urls
             with open('data.json', 'w') as write_file:
                 json.dump(json_to_save, write_file, indent=4)
 
-    @staticmethod
-    def get_photo():
-        with open('data.json') as f:
+    def add_to_db(self, engine):
+        with open('data.json', 'r') as f:
             data = json.load(f)
-            for i in data:
-                VK_USER_ID = i.get('id')
-                first_name = i.get('first_name')
-                last_name = i.get('last_name')
-                account_type = i.get('account_type')
-                params = {
-                    'owner_id': VK_USER_ID,
-                    'access_token': pers_token,
-                    'v': '5.131',
-                    'album_id': 'profile',
-                    'extended': '1',
-                    'photo_sizes': '1',
-                    'count': NUMBER_OF_PHOTOS
-                }
-                url = f'{HOST}/method/photos.get'
-                if account_type == False:
-                    response = requests.get(url, params).json()
-                    time.sleep(0.3)
-                    items = response['response']['items']
-                    # print(response)
-                    for x in items:
-                        for k, v in x.items():
-                            if k == 'sizes':
-                                x['sizes'] = v[-1]
+            for info in data:
+                name = "{} {}".format(info['last_name'], info['first_name'])
+                url = info['profile_link']
 
-                    for x in items[
-                            -3:]:  # Выводим ссылки последних 3 фотографий с наибольшим количеством лайков
-
-                        url = (x['sizes']['url'])
-                        return url
+                add_info(name, url)
