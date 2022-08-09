@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 from Database.models import Base, Name, Photo, Url
 
-load_dotenv('.env_example')
+load_dotenv('.env')
 login = os.getenv("LOGIN")
 password = os.getenv("PASSWORD")
 db_name = os.getenv("DB_NAME")
@@ -118,18 +118,18 @@ def delete_info(num):
     return f'Пользователь {name} успешно удален из избранных'
 
 
-if __name__ == '__main__':
-    name = ''
-    url = ''
-    photos = []
-    num = 1
-    create_tables(engine)
-    # add_info()
-    # get_name(1)
-    # get_url(1)
-    # get_photos(1)
-    # print(delete_info(2))
-    # add_info('Danil Dzuba', 'htsdoijfdds/dasokjdsia',
-    #          ['dsadasdsa', 'sdadasdsadas'])
-    # print(get_all_info(3))
-    # print(get_name_with_id())
+# if __name__ == '__main__':
+# name = ''
+# url = ''
+# photos = []
+# num = 1
+# create_tables(engine)
+# add_info()
+# get_name(1)
+# get_url(1)
+# get_photos(1)
+# print(delete_info(2))
+# add_info('Danil Dzuba', 'htsdoijfdds/dasokjdsia',
+#          ['dsadasdsa', 'sdadasdsadas'])
+# print(get_all_info(3))
+# print(get_name_with_id())
