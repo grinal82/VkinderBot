@@ -118,7 +118,6 @@ class VkBot:
         user_sex = self.info_on_sex(user_id)
         user_age_to = self.info_on_age(user_id)
         user_age_from = user_age_to - 10
-        # user_id_list = []
         if user_sex == 2:
             user_sex -= 1
         elif user_sex == 1:
@@ -146,8 +145,8 @@ class VkBot:
         }
         url = f'{HOST}/method/users.search'
         response = requests.get(url, params=params).json()
-        time.sleep(0.3)
-        offset += count
+        time.sleep(0.2)
+        offset += 1
         per_info = response['response']['items']
         for info in per_info:
             profile_url = 'https://vk.com/'
@@ -160,7 +159,6 @@ class VkBot:
             data_on_user['profile_link'] = f'{profile_url}{domain}'
             data_on_user['photo_link'] = []
             json_to_save.append(data_on_user)
-            # pprint(json_to_save)
 
             params2 = {
                 'owner_id': info['id'],
@@ -175,7 +173,7 @@ class VkBot:
             urls = []
             if info['is_closed'] == False:
                 response = requests.get(url, params2).json()
-                time.sleep(0.3)
+                time.sleep(0.2)
                 items = response['response']['items']
                 # print(response)
                 for x in items:
@@ -189,14 +187,7 @@ class VkBot:
                     url = (x['sizes']['url'])
                     urls.append(url)
             data_on_user['photo_link'] = urls
+            # add_info(name, link)
             with open('data.json', 'w') as write_file:
                 json.dump(json_to_save, write_file, indent=4)
-
-    def add_to_db(self, engine):
-        with open('data.json', 'r') as f:
-            data = json.load(f)
-            for info in data:
-                name = "{} {}".format(info['last_name'], info['first_name'])
-                url = info['profile_link']
-
-                add_info(name, url)
+        return json_to_save

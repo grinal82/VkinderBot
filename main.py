@@ -13,6 +13,7 @@ from Database.logic_db import create_tables, add_info
 from io import BytesIO
 import requests
 import json
+import time
 
 
 def write_msg(user_id, message, keyboard=None):
@@ -34,46 +35,14 @@ def write_msg(user_id, message, keyboard=None):
     vk.method('messages.send', post)
 
 
-#  функция чтобы отправлять фото
-def send_photo(user_id):
-    with open('data.json', 'r') as f:
-        data = json.load(f)
-        count = 0
-        for info in data:
-            while count <= len(info['photo_link']):
-                photo = info['photo_link'][count]
-                # count += 1
-
-                url = "".join(photo)
-                attachment = image_uploader(url)
-                vk.method(
-                    'messages.send', {
-                        'user_id': user_id,
-                        'attachment': attachment,
-                        'random_id': random.randint(0, 2048)
-                    })
-                count += 1
-            else:
-                continue
-
-
-def get_info_on_person():
-    with open('data.json', 'r') as f:
-        data = json.load(f)
-        for info in data:
-            name = "{} {}".format(info['last_name'], info['first_name'])
-            url = info['profile_link']
-            print(f'{name}\n{url}')
-        return f'{name}\n{url}\n'
-
-
-load_dotenv()
-# получаем созданный ранее токен группы для работы бота
-token = os.getenv("VK_API_TOKEN")
-
-# Авторизуемся как группа VK
-vk = vk_api.VkApi(token=token)
-uploader = vk_api.upload.VkUpload(vk)
+def send_photo(user_id, url, keyboard=None):
+    attachment = image_uploader(url)
+    vk.method(
+        'messages.send', {
+            'user_id': user_id,
+            'attachment': attachment,
+            'random_id': random.randint(0, 2048)
+        })
 
 
 #  формирование аттачмент для отправки через send_photo
@@ -87,8 +56,24 @@ def image_uploader(url):
     return attachment
 
 
+load_dotenv()
+# получаем созданный ранее токен группы для работы бота
+token = os.getenv("VK_API_TOKEN")
+
+# Авторизуемся как группа VK
+vk = vk_api.VkApi(token=token)
+uploader = vk_api.upload.VkUpload(vk)
 # Работа с сообщениями
 longpoll = VkLongPoll(vk)
+
+
+def loop_bot():
+    for event in longpoll.listen():
+        if event.type == VkEventType.MESSAGE_NEW:
+            if event.to_me:
+                message_text = event.text
+                return message_text, event.user_id
+
 
 login = os.getenv("LOGIN")
 password = os.getenv("PASSWORD")
@@ -97,27 +82,32 @@ db_name = os.getenv("DB_NAME")
 DSN = f"postgresql://{login}:{password}@localhost:5432/{db_name}"
 
 engine = sqlalchemy.create_engine(DSN)
-DBsession = orm.sessionmaker(bind=engine)
+DBsession = sessionmaker(bind=engine)
+session = DBsession
 
 print("Server started")
-with DBsession() as db_sesion:
-    for event in longpoll.listen():
 
-        if event.type == VkEventType.MESSAGE_NEW:
-
-            if event.to_me:
-
-                print(f'New message from {event.user_id}', end='')
-
-                bot = VkBot(event.user_id, db_sesion)
-                create_tables(engine)
-                keyboard = VkKeyboard()
-                keyboard.add_button("Поехали!", VkKeyboardColor.PRIMARY)
-                text = event.text.lower()
-                write_msg(event.user_id, bot.new_message(event.text), keyboard)
-
-                bot.search_all(event.user_id)
-                write_msg(event.user_id, get_info_on_person(), keyboard)
-                send_photo(event.user_id)
-                # send_photo(event.user_id)
-                # send_photo(event.user_id)
+if __name__ == '__main__':
+    while True:
+        text, user_id = loop_bot()
+        print(f'New message from {user_id}', end='')
+        bot = VkBot(user_id, session)
+        create_tables(engine)
+        keyboard = VkKeyboard()
+        keyboard.add_button("Поехали!", VkKeyboardColor.PRIMARY)
+        write_msg(user_id, bot.new_message(text))
+        if text.lower() == 'да':
+            write_msg(user_id, "Жми Поехали!", keyboard)
+            result = bot.search_all(user_id)
+            for i in range(len(result)):
+                info = result[i]
+                url = info['profile_link']
+                name = "{} {}\n{}".format(info['last_name'],
+                                          info['first_name'],
+                                          info['profile_link'])
+                add_info(name, url)
+                write_msg(user_id, name, keyboard)
+                for photo in range(len(result[i]['photo_link'])):
+                    url = "".join(info['photo_link'])
+                    send_photo(user_id, url)
+                    # time.sleep(0.2)
