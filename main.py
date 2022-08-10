@@ -97,8 +97,8 @@ if __name__ == '__main__':
         keyboard = VkKeyboard()
         keyboard.add_button("Поехали!", VkKeyboardColor.PRIMARY)
         write_msg(user_id, bot.new_message(text))
-        if text.lower() == 'да':
-            write_msg(user_id, "Жми Поехали!", keyboard)
+        if text.lower() == 'да' or text.lower() == "поехали!":
+            write_msg(user_id, "Лови подборку кандидатов", keyboard)
             result = bot.search_all(user_id)
             # bot.create_json(result)
             for i in range(len(result)):
@@ -119,12 +119,14 @@ if __name__ == '__main__':
                     for photo in range(len(sorted_pers_photo)):
                         send_photo(user_id,
                                    attachment=sorted_pers_photo[photo][1])
-                # info = result[i]
-                # url = info['profile_link']
-                # name = "{} {}".format(info['last_name'], info['first_name'])
-                # add_info(name, url)
-                # write_msg(user_id, f'{name}\n{url}', keyboard)
-                # for photo in range(len(result[i]['photo_link'])):
-                #     url = "".join(info['photo_link'])
-                #     send_photo(user_id, url)
-                # time.sleep(0.2)
+                        try:
+                            add_info(
+                                f'{result[i][1]}{result[i][2]}',
+                                f'{result[i][3]}',
+                                [
+                                    sorted_pers_photo[0][1],
+                                    #  sorted_pers_photo[0][0],
+                                ])
+                        except AttributeError:
+                            write_msg(user_id, 'Произошла ошибка')
+                            break

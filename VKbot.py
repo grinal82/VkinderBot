@@ -50,7 +50,7 @@ class VkBot:
         self._USERNAME = self._user_name_from_vk_id(user_id)
 
         self._COMMANDS = ["ПРИВЕТ", "САЛЮТ", "ХАЙ", "ЗДОРОВА"]
-        self._COMMANDS2 = "ПОЕХАЛИ!"
+        self._COMMANDS2 = ["ПОЕХАЛИ!", "ДА"]
 
     def _user_name_from_vk_id(self, user_id):
         """Метод получения id написавшего пользователя
@@ -211,6 +211,7 @@ class VkBot:
                 ])
             except IndexError:
                 photos.append(['нет фото'])
+            # pprint(response)
         return photos
 
     def sort_photos(self, photos):
@@ -223,7 +224,7 @@ class VkBot:
     def create_json(List):
         json_to_save = []
         pers_info = {}
-        for i, info in enumerate(data):
+        for i, info in enumerate(List):
             pers_info['id'] = info[0]
             pers_info['first_name'] = info[1]
             pers_info['last_name'] = info[2]
