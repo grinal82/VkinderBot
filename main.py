@@ -17,14 +17,11 @@ import time
 
 
 def write_msg(user_id, message, keyboard=None):
-    """ Функция write_msg получает id пользователя ВК, 
+    """
+    Функция write_msg получает id пользователя ВК <user_id>, 
     которому оно отправит сообщение и собственно само сообщение
     random_id - уникальный идентификатор, 
-    предназначенный для предотвращения повторной отправки одинакового сообщения.
-    Параметры:
-    id пользователя в ВК. Тип: Int
-    message сообщение пользователю
-    keyboard - состояние клавиатуры
+    предназначенный для предотвращения повторной отправки одинакового сообщения. 
     """
     post = {
         'user_id': user_id,
@@ -38,14 +35,8 @@ def write_msg(user_id, message, keyboard=None):
     vk.method('messages.send', post)
 
 
-def send_photo(user_id, url, keyboard=None):
-    """ Функция отправки пользователю фотографии
-    Параметры:
-    id пользователя в ВК. Тип: Int
-    url ссылка на фотографию
-    keyboard - состояние клавиатуры
-    """
-    attachment = image_uploader(url)
+def send_photo(user_id, attachment, keyboard=None):
+    # attachment = image_uploader(url)
     vk.method(
         'messages.send', {
             'user_id': user_id,
@@ -54,10 +45,8 @@ def send_photo(user_id, url, keyboard=None):
         })
 
 
-
+#  формирование аттачмент для отправки через send_photo
 def image_uploader(url):
-    """Функция формирования аттачмент для отправки через send_photo
-    Параметр - ссылка на фото. Тип: str"""
     result = requests.get(url).content
     img = BytesIO(result)
     image = uploader.photo_messages(img)
@@ -68,18 +57,18 @@ def image_uploader(url):
 
 
 load_dotenv()
-"""получаем созданный ранее токен группы для работы бота"""
+# получаем созданный ранее токен группы для работы бота
 token = os.getenv("VK_API_TOKEN")
 
-"""Авторизуемся как группа VK"""
+# Авторизуемся как группа VK
 vk = vk_api.VkApi(token=token)
 uploader = vk_api.upload.VkUpload(vk)
-"""Работа с сообщениями"""
+# Работа с сообщениями
 longpoll = VkLongPoll(vk)
 
 
+#  Функция циклического отслеживания сообщаний
 def loop_bot():
-    """Функция механизма работы чат-бота"""
     for event in longpoll.listen():
         if event.type == VkEventType.MESSAGE_NEW:
             if event.to_me:
@@ -111,15 +100,31 @@ if __name__ == '__main__':
         if text.lower() == 'да':
             write_msg(user_id, "Жми Поехали!", keyboard)
             result = bot.search_all(user_id)
+            # bot.create_json(result)
             for i in range(len(result)):
-                info = result[i]
-                url = info['profile_link']
-                name = "{} {}\n{}".format(info['last_name'],
-                                          info['first_name'],
-                                          info['profile_link'])
-                add_info(name, url)
-                write_msg(user_id, name, keyboard)
-                for photo in range(len(result[i]['photo_link'])):
-                    url = "".join(info['photo_link'])
-                    send_photo(user_id, url)
-                    # time.sleep(0.2)
+                pers_photo = bot.get_photo(result[i][0])
+                if pers_photo == 'доступ к фото ограничен':
+                    continue
+                sorted_pers_photo = bot.sort_photos(pers_photo)
+                write_msg(user_id,
+                          f'\n{result[i][1]}{result[i][2]}\n{result[i][3]}')
+                try:
+                    send_photo(user_id,
+                               attachment=','.join([
+                                   sorted_pers_photo[-1][1],
+                                   sorted_pers_photo[-2][1],
+                                   sorted_pers_photo[-3][1]
+                               ]))
+                except IndexError:
+                    for photo in range(len(sorted_pers_photo)):
+                        send_photo(user_id,
+                                   attachment=sorted_pers_photo[photo][1])
+                # info = result[i]
+                # url = info['profile_link']
+                # name = "{} {}".format(info['last_name'], info['first_name'])
+                # add_info(name, url)
+                # write_msg(user_id, f'{name}\n{url}', keyboard)
+                # for photo in range(len(result[i]['photo_link'])):
+                #     url = "".join(info['photo_link'])
+                #     send_photo(user_id, url)
+                # time.sleep(0.2)

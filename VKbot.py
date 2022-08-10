@@ -6,16 +6,15 @@ import os
 from pprint import pprint
 import datetime
 import vk_api
+from vk_api import ApiError
 import json
 import time
-from Database.logic_db import add_info
 
 load_dotenv()
 
 td = datetime.datetime.now().date()
 """получаем групповой"""
 token = os.getenv("VK_API_TOKEN")
-
 """получаем созданный ранее персональный токен"""
 pers_token = os.getenv("PersonalToken")
 
@@ -123,7 +122,7 @@ class VkBot:
     def info_on_age(self, user_id):
         """Метод получения информации о возрасте пользователя
         Параметр - id пользователя в ВК
-        Тип: Int"""    
+        Тип: Int"""
         info = vk.method('users.get', {
             'user_id': user_id,
             'fields': 'bdate',
@@ -150,8 +149,8 @@ class VkBot:
             user_sex -= 1
         elif user_sex == 1:
             user_sex += 1
-        json_to_save = []
-        offset = 10
+        persons = []
+        offset = 0
         count = 10
         params = {
             'access_token': pers_token,
@@ -175,47 +174,61 @@ class VkBot:
         response = requests.get(url, params=params).json()
         time.sleep(0.2)
         offset += 1
-        per_info = response['response']['items']
-        for info in per_info:
-            profile_url = 'https://vk.com/'
-            data_on_user = {}
-            data_on_user['id'] = info['id']
-            data_on_user['first_name'] = info['first_name']
-            data_on_user['last_name'] = info['last_name']
-            data_on_user['account_type'] = info['is_closed']
-            domain = info['domain']
-            data_on_user['profile_link'] = f'{profile_url}{domain}'
-            data_on_user['photo_link'] = []
-            json_to_save.append(data_on_user)
+        profile_url = 'https://vk.com/id'
+        for element in response['response']['items']:
+            person = [
+                element['id'], element['first_name'], element['last_name'],
+                profile_url + str(element['id'])
+            ]
+            persons.append(person)
+        return persons
 
-            params2 = {
-                'owner_id': info['id'],
-                'access_token': pers_token,
-                'v': '5.131',
-                'album_id': 'profile',
-                'extended': '1',
-                'photo_sizes': '1',
-                'count': NUMBER_OF_PHOTOS
-            }
-            url = f'{HOST}/method/photos.get'
-            urls = []
-            if info['is_closed'] == False:
-                response = requests.get(url, params2).json()
-                time.sleep(0.2)
-                items = response['response']['items']
-                # print(response)
-                for x in items:
-                    for k, v in x.items():
-                        if k == 'sizes':
-                            x['sizes'] = v[-1]
+    def get_photo(self, id):
+        params2 = {
+            'owner_id': id,
+            'access_token': pers_token,
+            'v': '5.131',
+            'album_id': 'profile',
+            'extended': '1',
+            'photo_sizes': '1',
+            'count': NUMBER_OF_PHOTOS
+        }
+        url = f'{HOST}/method/photos.get'
 
-                for x in items[
-                        -3:]:  # Выводим ссылки последних 3 фотографий с наибольшим количеством лайков
+        try:
+            response = requests.get(url, params2).json()
+            time.sleep(0.2)
+        except ApiError:
+            return 'доступ к фото ограничен'
+        photos = []
+        for i in range(NUMBER_OF_PHOTOS):
+            try:
+                photos.append([
+                    response['response']['items'][i]['likes']['count'],
+                    'photo' +
+                    str(response['response']['items'][i]['owner_id']) + '_' +
+                    str(response['response']['items'][i]['id'])
+                ])
+            except IndexError:
+                photos.append(['нет фото'])
+        return photos
 
-                    url = (x['sizes']['url'])
-                    urls.append(url)
-            data_on_user['photo_link'] = urls
-            # add_info(name, link)
-            with open('data.json', 'w') as write_file:
-                json.dump(json_to_save, write_file, indent=4)
+    def sort_photos(self, photos):
+        result = []
+        for element in photos:
+            if element != ['нет фото'] and photos != 'доступ к фото ограничен':
+                result.append(element)
+        return sorted(result)
+
+    def create_json(List):
+        json_to_save = []
+        pers_info = {}
+        for i, info in enumerate(data):
+            pers_info['id'] = info[0]
+            pers_info['first_name'] = info[1]
+            pers_info['last_name'] = info[2]
+            pers_info['id_link'] = info[3]
+            json_to_save.append(pers_info.copy())
+        with open('data.json', 'w') as write_file:
+            json.dump(json_to_save, write_file, indent=4)
         return json_to_save
