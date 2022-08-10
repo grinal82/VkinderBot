@@ -20,11 +20,16 @@
     >pip install -r requirements.txt
 
 - _Создать в корне файл .env и записать в него следующие переменные_
-VK_API_TOKEN = "XXXXXXX"
+    VK_API_TOKEN = "XXXXXXX"
+
 >Создать токен групп ВК. Пример по [ссылке](https://pechenek.net/social-networks/vk/api-vk-poluchaem-klyuch-dostupa-token-gruppy/)
-PersonalToken = "XXXXXX"
+
+    PersonalToken = "XXXXXX"
 >Создать персональный токен. Можно воспользоваться этой [ссылкой](https://vkhost.github.io/)
-LOGIN = "your login to postgres db"
-PASSWORD = "your password"
-DB_NAME = "database_name"
+
+    LOGIN = "your login to postgres db"
+
+    PASSWORD = "your password"
+
+    DB_NAME = "database_name"
 
