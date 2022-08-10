@@ -4,8 +4,9 @@ from sqlalchemy.orm import declarative_base, relationship
 Base = declarative_base()
 
 
-# create table 'name'
+
 class Name(Base):
+    """Класс создания таблицы 'name' """
     __tablename__ = 'name'
 
     id = sq.Column(sq.Integer, primary_key=True)
@@ -15,8 +16,9 @@ class Name(Base):
         return f'{self.name}'
 
 
-# create table 'url'
+
 class Url(Base):
+    """Класс создания таблицы 'url' """
     __tablename__ = 'url'
 
     id = sq.Column(sq.Integer, primary_key=True)
@@ -29,8 +31,9 @@ class Url(Base):
         return f'{self.url}'
 
 
-# create table 'photo'
+
 class Photo(Base):
+    """Класс создания таблицы 'photo' """
     __tablename__ = 'photo'
 
     id = sq.Column(sq.Integer, primary_key=True)

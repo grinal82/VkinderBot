@@ -13,10 +13,10 @@ from Database.logic_db import add_info
 load_dotenv()
 
 td = datetime.datetime.now().date()
-# получаем групповой
+"""получаем групповой"""
 token = os.getenv("VK_API_TOKEN")
 
-# получаем созданный ранее персональный токен
+"""получаем созданный ранее персональный токен"""
 pers_token = os.getenv("PersonalToken")
 
 vk = vk_api.VkApi(token=token)
@@ -27,6 +27,22 @@ HOST = r'https://api.vk.com'
 
 
 class VkBot:
+    """Класс ВКбота, используется для получения от пользователей сообщений и передачи им информации
+    Атрибуты:
+    USER_ID - id  пользователя Вконтакте, отправившему боту сообщение
+    USERNAME - имя данного пользователя
+    COMMANDS - команды команды, которые бот ожидпет получить от пользователя
+    COMMANDS2 - команда, после которой юзеру предоставляется информация
+
+    Методы:
+    _user_name_from_vk_id - получает id пользователя
+    new_message - проверяет сообщения от пользователя
+    clean_all_tag_from_str - очищает строку
+    info_on_city - получение города пользователя
+    info_on_sex - получение пола пользователя
+    nfo_on_age - получение возраста пользователя
+    search_all - поиск необходимой информации по критериям
+    """
 
     def __init__(self, user_id, db_session):
         print("\nСоздан объект бота!")
@@ -38,6 +54,9 @@ class VkBot:
         self._COMMANDS2 = "ПОЕХАЛИ!"
 
     def _user_name_from_vk_id(self, user_id):
+        """Метод получения id написавшего пользователя
+        Параметр - id пользователя в ВК
+        Тип: Int"""
         request = requests.get("https://vk.com/id" + str(user_id))
         bs = bs4.BeautifulSoup(request.text, "html.parser")
 
@@ -46,8 +65,10 @@ class VkBot:
         return user_name.split()[0]
 
     def new_message(self, message):
-
-        # Привет
+        """Метод, который проверяет полученное сообщение от пользователя
+        на соответствие необходимых понятных для бота приветсвий.
+        Параметр - сообщение от пользователя
+        Тип - str"""
         if message.upper() in self._COMMANDS:
             return f"Категорически приветствую, {self._USERNAME}!\nХочешь найти вторую половинку?"
         elif message.upper() == self._COMMANDS2:
@@ -57,12 +78,10 @@ class VkBot:
 
     @staticmethod
     def _clean_all_tag_from_str(string_line):
-        """
-        Очистка строки stringLine от тэгов и их содержимых
-        param string_line: Очищаемая строка
+        """ Метод очистки строки stringLine от тэгов и их содержимых
+        Параметр - string_line: Очищаемая строка
         return: очищенная строка
         """
-
         result = ""
         not_skip = True
         for i in list(string_line):
@@ -78,7 +97,9 @@ class VkBot:
         return result
 
     def info_on_city(self, user_id):
-
+        """Метод получения информации о городе пользователя
+        Параметр - id пользователя в ВК
+        Тип: Int"""
         info = vk.method('users.get', {
             'user_id': user_id,
             'fields': 'city',
@@ -88,7 +109,9 @@ class VkBot:
         return city
 
     def info_on_sex(self, user_id):
-
+        """Метод получения информации о половой принадлежности пользователя
+        Параметр - id пользователя в ВК
+        Тип: Int"""
         info = vk.method('users.get', {
             'user_id': user_id,
             'fields': 'sex',
@@ -98,7 +121,9 @@ class VkBot:
         return sex
 
     def info_on_age(self, user_id):
-
+        """Метод получения информации о возрасте пользователя
+        Параметр - id пользователя в ВК
+        Тип: Int"""    
         info = vk.method('users.get', {
             'user_id': user_id,
             'fields': 'bdate',
@@ -114,6 +139,9 @@ class VkBot:
         return age_years
 
     def search_all(self, user_id):
+        """Метод поиска людей исходя из заданных критериев
+        Параметр - id пользователя в ВК
+        Тип: Int"""
         user_city = self.info_on_city(user_id)
         user_sex = self.info_on_sex(user_id)
         user_age_to = self.info_on_age(user_id)

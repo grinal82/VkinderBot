@@ -17,11 +17,14 @@ import time
 
 
 def write_msg(user_id, message, keyboard=None):
-    """
-    Функция write_msg получает id пользователя ВК <user_id>, 
+    """ Функция write_msg получает id пользователя ВК, 
     которому оно отправит сообщение и собственно само сообщение
     random_id - уникальный идентификатор, 
-    предназначенный для предотвращения повторной отправки одинакового сообщения. 
+    предназначенный для предотвращения повторной отправки одинакового сообщения.
+    Параметры:
+    id пользователя в ВК. Тип: Int
+    message сообщение пользователю
+    keyboard - состояние клавиатуры
     """
     post = {
         'user_id': user_id,
@@ -36,6 +39,12 @@ def write_msg(user_id, message, keyboard=None):
 
 
 def send_photo(user_id, url, keyboard=None):
+    """ Функция отправки пользователю фотографии
+    Параметры:
+    id пользователя в ВК. Тип: Int
+    url ссылка на фотографию
+    keyboard - состояние клавиатуры
+    """
     attachment = image_uploader(url)
     vk.method(
         'messages.send', {
@@ -45,8 +54,10 @@ def send_photo(user_id, url, keyboard=None):
         })
 
 
-#  формирование аттачмент для отправки через send_photo
+
 def image_uploader(url):
+    """Функция формирования аттачмент для отправки через send_photo
+    Параметр - ссылка на фото. Тип: str"""
     result = requests.get(url).content
     img = BytesIO(result)
     image = uploader.photo_messages(img)
@@ -57,17 +68,18 @@ def image_uploader(url):
 
 
 load_dotenv()
-# получаем созданный ранее токен группы для работы бота
+"""получаем созданный ранее токен группы для работы бота"""
 token = os.getenv("VK_API_TOKEN")
 
-# Авторизуемся как группа VK
+"""Авторизуемся как группа VK"""
 vk = vk_api.VkApi(token=token)
 uploader = vk_api.upload.VkUpload(vk)
-# Работа с сообщениями
+"""Работа с сообщениями"""
 longpoll = VkLongPoll(vk)
 
 
 def loop_bot():
+    """Функция механизма работы чат-бота"""
     for event in longpoll.listen():
         if event.type == VkEventType.MESSAGE_NEW:
             if event.to_me:

@@ -20,8 +20,14 @@ def create_tables(engine):
     Base.metadata.create_all(engine)
 
 
-# add info in database
+
 def add_info(name, url, photos=None):
+    """Функция добавляет информацию о полученном человеке в базу данных
+    Параметры:
+    name - имя человека. Тип: str
+    url - ссылка на страницу вк. Тип: str
+    photos - Ссылка на фото. Тип: str
+    """
     Session = sessionmaker(bind=engine)
     session = Session()
 
@@ -43,17 +49,25 @@ def add_info(name, url, photos=None):
 
 
 def get_name(num):
+    """Функция получении имени человека по его id в БД
+    Параметр - num.
+    Тип: int
+    """
     Session = sessionmaker(bind=engine)
     session = Session()
 
-    # get name
+
     for c in session.query(Name).filter(Name.id == num).all():
         return c
     session.close()
 
 
-# Получение адреса в вк по id пользователя
+
 def get_url(num):
+    """Функция получения адреса в вк человека по его id в БД
+    Параметр - num.
+    Тип: int
+    """
     Session = sessionmaker(bind=engine)
     session = Session()
 
@@ -67,8 +81,12 @@ def __str__(value):
     return f'{value}'
 
 
-# Получение фото по id пользователя
+
 def get_photos(num):
+    """Функция получения ссылки на фото человека по его id в БД
+    Параметр - num.
+    Тип: int
+    """
     Session = sessionmaker(bind=engine)
     session = Session()
     content_list = []
@@ -94,6 +112,10 @@ def get_name_with_id():
 
 
 def get_all_info(num):
+    """Функция получения полной информации о человека по его id в БД
+    Параметр - num.
+    Тип: int
+    """
     content_dir = {}
     name = get_name(num)
     url = get_url(num)
@@ -104,8 +126,12 @@ def get_all_info(num):
     return content_dir
 
 
-# Удаление пользователя по id
+
 def delete_info(num):
+    """Функция удаления данных о человеке по его id в БД
+    Параметр - num.
+    Тип: int
+    """
     Session = sessionmaker(bind=engine)
     session = Session()
     name = get_name(num)
