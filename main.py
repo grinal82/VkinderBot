@@ -9,7 +9,7 @@ import sqlalchemy
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import orm
 from Database import models
-from Database.logic_db import create_tables, add_info
+from Database.logic_db import create_tables, add_info, get_all_info
 from io import BytesIO
 import requests
 import json
@@ -36,7 +36,7 @@ def write_msg(user_id, message, keyboard=None):
 
 
 def send_photo(user_id, attachment, keyboard=None):
-    # attachment = image_uploader(url)
+
     vk.method(
         'messages.send', {
             'user_id': user_id,
@@ -54,6 +54,16 @@ def image_uploader(url):
     owner_id = str(image[0]['owner_id'])
     attachment = f'photo{owner_id}_{media_id}'
     return attachment
+
+
+def show_information():
+    write_msg(user_id, f'Это последний кандидат'
+              f' Перейти в избранное - 3')
+
+
+#TODO - Доделать функционал
+def show_selected(id):
+    all_users = get_all_info(id)
 
 
 load_dotenv()
@@ -76,6 +86,7 @@ def loop_bot():
                 return message_text, event.user_id
 
 
+# Получаем доступ к БД
 login = os.getenv("LOGIN")
 password = os.getenv("PASSWORD")
 db_name = os.getenv("DB_NAME")
@@ -95,19 +106,22 @@ if __name__ == '__main__':
         bot = VkBot(user_id, session)
         create_tables(engine)
         keyboard = VkKeyboard()
-        keyboard.add_button("Поехали!", VkKeyboardColor.PRIMARY)
+        keyboard.add_button("Поехали!",
+                            VkKeyboardColor.PRIMARY)  # Создаем кнопку
         write_msg(user_id, bot.new_message(text))
         if text.lower() == 'да' or text.lower() == "поехали!":
             write_msg(user_id, "Лови подборку кандидатов", keyboard)
-            result = bot.search_all(user_id)
-            # bot.create_json(result)
+            result = bot.search_all(
+                user_id)  # Ищем кандидатов (10 человек) -> список списков
+            # bot.create_json(result)                                       Пока не работает
             for i in range(len(result)):
                 pers_photo = bot.get_photo(result[i][0])
                 if pers_photo == 'доступ к фото ограничен':
                     continue
                 sorted_pers_photo = bot.sort_photos(pers_photo)
                 write_msg(user_id,
-                          f'\n{result[i][1]}{result[i][2]}\n{result[i][3]}')
+                          f'\n{result[i][1]}{result[i][2]}\n{result[i][3]}'
+                          )  #Выводим в чат данные по и-той анкете
                 try:
                     send_photo(user_id,
                                attachment=','.join([
@@ -119,14 +133,29 @@ if __name__ == '__main__':
                     for photo in range(len(sorted_pers_photo)):
                         send_photo(user_id,
                                    attachment=sorted_pers_photo[photo][1])
-                        try:
-                            add_info(
-                                f'{result[i][1]}{result[i][2]}',
-                                f'{result[i][3]}',
-                                [
-                                    sorted_pers_photo[0][1],
-                                    #  sorted_pers_photo[0][0],
-                                ])
-                        except AttributeError:
-                            write_msg(user_id, 'Произошла ошибка')
-                            break
+                        write_msg(
+                            user_id, '1 - Добавить, 2 - Далее'
+                        )  # Предлагаем пользователю либо добавить анкету в избранное, либо двигаться дальше
+                        text, user_id = loop_bot()
+                        if text == '1':
+                            try:
+                                add_info(  #Если пользователь ввел "1" добавляем в БД вызвав add_info
+                                    f'{result[i][1]}{result[i][2]}',
+                                    f'{result[i][3]}',
+                                    [
+                                        sorted_pers_photo[0][1],
+                                        #  sorted_pers_photo[0][0],
+                                    ])
+                            except AttributeError:
+                                write_msg(user_id, 'Произошла ошибка')
+                                break
+                        elif text == '2':
+                            if i > len(result) - 1:
+                                show_information()
+#TODO
+# - доделать вывод выбранных анкет
+#
+#
+#
+#                       elif text == '3':
+#   show_selected(user_id)
