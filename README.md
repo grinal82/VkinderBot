@@ -38,4 +38,6 @@
 
 #### _Для начала работы напишите "привет"_ ####
 
+##### _СХЕМА БАЗ ДАННЫХ_ #####
+
 ![alt text](https://github.com/grinal82/VkinderBot/blob/main/DB.png?raw=true)
