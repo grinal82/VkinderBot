@@ -4,43 +4,38 @@ from sqlalchemy.orm import declarative_base, relationship
 Base = declarative_base()
 
 
-
-class Name(Base):
-    """Класс создания таблицы 'name' """
-    __tablename__ = 'name'
-
+class User(Base):
+    """Класс создания таблицы 'user' """
+    __tablename__ = 'user'
+    #  Добавляем данные по юзеру бота
     id = sq.Column(sq.Integer, primary_key=True)
-    name = sq.Column(sq.String, nullable=False)
-
-    def __str__(self):
-        return f'{self.name}'
+    user_id = sq.Column(sq.Integer, nullable=False, unique=True)
 
 
-
-class Url(Base):
-    """Класс создания таблицы 'url' """
-    __tablename__ = 'url'
-
-    id = sq.Column(sq.Integer, primary_key=True)
-    url = sq.Column(sq.String, nullable=False)
-    url_id = sq.Column(sq.Integer, sq.ForeignKey('name.id'), nullable=False)
-
-    relation = relationship(Name, backref='url')
-
-    def __str__(self):
-        return f'{self.url}'
-
+class Selected(Base):
+    """
+Таблица анкет пользователь добавленных в "избранное"
+    """
+    __tablename__ = 'selected_user'
+    id = sq.Column(sq.Integer, primary_key=True, autoincrement=True)
+    vk_id = sq.Column(sq.Integer, unique=True)
+    first_name = sq.Column(sq.String)
+    last_name = sq.Column(sq.String)
+    link = sq.Column(sq.String)
+    id_user = sq.Column(sq.Integer, sq.ForeignKey('user.id',
+                                                  ondelete='CASCADE'))
 
 
 class Photo(Base):
-    """Класс создания таблицы 'photo' """
+    """
+    Класс создания таблицы 'photo' 
+    """
     __tablename__ = 'photo'
 
-    id = sq.Column(sq.Integer, primary_key=True)
+    id = sq.Column(sq.Integer, primary_key=True, autoincrement=True)
     photo = sq.Column(sq.String)
-    photo_id = sq.Column(sq.Integer, sq.ForeignKey('name.id'), nullable=False)
-
-    relation = relationship(Name, backref='photo')
+    photo_id = sq.Column(sq.Integer,
+                         sq.ForeignKey('selected_user.id', ondelete='CASCADE'))
 
     def __str__(self):
         return f'{self.photo}'

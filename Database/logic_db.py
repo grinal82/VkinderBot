@@ -1,9 +1,9 @@
 import os
-
 import sqlalchemy
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.exc import IntegrityError
 from dotenv import load_dotenv
-from Database.models import Base, Name, Photo, Url
+from Database.models import Base, User, Photo, Selected, User
 
 load_dotenv('.env')
 login = os.getenv("LOGIN")
@@ -20,142 +20,83 @@ def create_tables(engine):
     Base.metadata.create_all(engine)
 
 
+def add_user(user_id):
+    """
+    Args:
+        user_id (int): id юзера vkontakte 
 
-def add_info(name, url, photos=None):
-    """Функция добавляет информацию о полученном человеке в базу данных
-    Параметры:
-    name - имя человека. Тип: str
-    url - ссылка на страницу вк. Тип: str
-    photos - Ссылка на фото. Тип: str
+    Returns:
+        boolean: добавляет vk id пользователя 
+    """
+    try:
+        new_user = User(user_id=user_id)
+        Session = sessionmaker(bind=engine)
+        session = Session()
+        session.add(new_user)
+        session.commit()
+        return True
+    except (IntegrityError):
+        return False
+
+
+def add_info(vk_id, first_name, last_name, link, id_user):
+    """
+    Функция добавляет информацию о полученном человеке в базу данных
+    """
+    try:
+        new_user = Selected(vk_id=vk_id,
+                            first_name=first_name,
+                            last_name=last_name,
+                            link=link,
+                            id_user=id_user)
+        Session = sessionmaker(bind=engine)
+        session = Session()
+        session.add(new_user)
+        session.commit()
+        return True
+    except (IntegrityError):
+        return False
+
+
+def add_photo(photo, photo_id):
+    try:
+        new_user = Photo(photo=photo, photo_id=photo_id)
+        Session = sessionmaker(bind=engine)
+        session = Session()
+        session.add(new_user)
+        session.commit()
+        return True
+    except (IntegrityError):
+        return False
+
+
+def check_favorite(id):
+    """
+    Вывод из БД отобранных пользователей  
     """
     Session = sessionmaker(bind=engine)
     session = Session()
-
-    name_ = Name(name=name)
-    session.add(name_)
-    session.commit()
-
-    if photos != None:
-        for photo in photos:
-            photo_ = Photo(photo=photo, relation=name_)
-            session.add(photo_)
-            session.commit()
-
-    url_ = Url(url=url, relation=name_)
-    session.add(url_)
-    session.commit()
-
-    session.close()
+    current_user_id = session.query(User).filter_by(user_id=id).first()
+    all_users = session.query(Selected).filter_by(
+        id_user=current_user_id.id).all()
+    return all_users
 
 
-def get_name(num):
-    """Функция получении имени человека по его id в БД
-    Параметр - num.
-    Тип: int
+def check_db_master(id):
+    """
+    выводим номер записи текущего юзера в БД 
     """
     Session = sessionmaker(bind=engine)
     session = Session()
+    current_user_id = session.query(User).filter_by(user_id=id).first()
+    return current_user_id
 
 
-    for c in session.query(Name).filter(Name.id == num).all():
-        return c
-    session.close()
-
-
-
-def get_url(num):
-    """Функция получения адреса в вк человека по его id в БД
-    Параметр - num.
-    Тип: int
+def check_candidate(id):
+    """
+    Проверка наличия текущего кандидата в БД 
     """
     Session = sessionmaker(bind=engine)
     session = Session()
-
-    # get url
-    for c in session.query(Url).filter(Url.url_id == num).all():
-        return c
-    session.close()
-
-
-def __str__(value):
-    return f'{value}'
-
-
-
-def get_photos(num):
-    """Функция получения ссылки на фото человека по его id в БД
-    Параметр - num.
-    Тип: int
-    """
-    Session = sessionmaker(bind=engine)
-    session = Session()
-    content_list = []
-
-    for c in session.query(Photo).filter(Photo.photo_id == num).all():
-        content_list.append(__str__(c))
-    session.close()
-    return content_list
-
-
-def get_name_with_id():
-    Session = sessionmaker(bind=engine)
-    session = Session()
-    content_dir = {}
-    name = session.query(Name).all()
-    id = session.query(Name.id).all()
-
-    calc = 0
-    for _ in zip(id, name):
-        content_dir['{}'.format(*id[calc])] = __str__(name[calc])
-        calc += 1
-    return content_dir
-
-
-def get_all_info(num):
-    """Функция получения полной информации о человека по его id в БД
-    Параметр - num.
-    Тип: int
-    """
-    content_dir = {}
-    name = get_name(num)
-    url = get_url(num)
-    photos = get_photos(num)
-    content_dir['name'] = __str__(name)
-    content_dir['url'] = __str__(url)
-    content_dir['photos'] = __str__(photos)
-    return content_dir
-
-
-
-def delete_info(num):
-    """Функция удаления данных о человеке по его id в БД
-    Параметр - num.
-    Тип: int
-    """
-    Session = sessionmaker(bind=engine)
-    session = Session()
-    name = get_name(num)
-    if name != None:
-        session.query(Url).filter(Url.url_id == num).delete()
-        session.query(Photo).filter(Photo.photo_id == num).delete()
-        session.query(Name).filter(Name.id == num).delete()
-    session.commit()
-    session.close()
-    return f'Пользователь {name} успешно удален из избранных'
-
-
-# if __name__ == '__main__':
-# name = ''
-# url = ''
-# photos = []
-# num = 1
-# create_tables(engine)
-# add_info()
-# get_name(1)
-# get_url(1)
-# get_photos(1)
-# print(delete_info(2))
-# add_info('Danil Dzuba', 'htsdoijfdds/dasokjdsia',
-#          ['dsadasdsa', 'sdadasdsadas'])
-# print(get_all_info(3))
-# print(get_name_with_id())
+    selected_user = session.query(Selected).filter_by(vk_id=id).first()
+    return selected_user
