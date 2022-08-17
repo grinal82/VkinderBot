@@ -1,9 +1,7 @@
-from xml import dom
 import bs4 as bs4
 import requests
 from dotenv import load_dotenv
 import os
-from pprint import pprint
 import datetime
 import vk_api
 from vk_api import ApiError
@@ -43,7 +41,7 @@ class VkBot:
     search_all - поиск необходимой информации по критериям
     """
 
-    def __init__(self, user_id, db_session):
+    def __init__(self, user_id):
         print("\nСоздан объект бота!")
 
         self._USER_ID = user_id
@@ -69,11 +67,11 @@ class VkBot:
         Параметр - сообщение от пользователя
         Тип - str"""
         if message.upper() in self._COMMANDS:
-            return f"Категорически приветствую, {self._USERNAME}!\nХочешь найти вторую половинку?"
-        elif message.upper() == self._COMMANDS2:
-            return f"{self._USERNAME}, продолжим? \U0001F609"
+            return f"Категорически приветствую, {self._USERNAME}!\nХочешь найти вторую половинку?\n 1 - Начать поиск    2 - Избранное"
+
         else:
-            return "О чём это ты..."
+            message.upper() in self._COMMANDS2
+            return f"{self._USERNAME}, продолжим? \U0001F609"
 
     @staticmethod
     def _clean_all_tag_from_str(string_line):
@@ -151,7 +149,7 @@ class VkBot:
             user_sex += 1
         persons = []
         offset = 0
-        count = 10
+        count = 100
         params = {
             'access_token': pers_token,
             'v': version,
@@ -172,8 +170,8 @@ class VkBot:
         }
         url = f'{HOST}/method/users.search'
         response = requests.get(url, params=params).json()
-        time.sleep(0.2)
-        offset += 1
+        # time.sleep(0.1)
+        offset += 10
         profile_url = 'https://vk.com/id'
         for element in response['response']['items']:
             person = [
@@ -184,6 +182,14 @@ class VkBot:
         return persons
 
     def get_photo(self, id):
+        """_Функция получения фото_
+
+        Args:
+            id : _id пользователя чье фото ищем_
+
+        Returns:
+            список списков : количество лайков и фото в формате attachment: photo{owner_id}_{media_id}'
+        """
         params2 = {
             'owner_id': id,
             'access_token': pers_token,
@@ -197,7 +203,7 @@ class VkBot:
 
         try:
             response = requests.get(url, params2).json()
-            time.sleep(0.2)
+            # time.sleep(0.3)
         except ApiError:
             return 'доступ к фото ограничен'
         photos = []
@@ -211,7 +217,6 @@ class VkBot:
                 ])
             except IndexError:
                 photos.append(['нет фото'])
-            # pprint(response)
         return photos
 
     def sort_photos(self, photos):
@@ -221,10 +226,14 @@ class VkBot:
                 result.append(element)
         return sorted(result)
 
-    def create_json(List):
+
+# Вспомогательная функция ...использовалась в процессе разработке
+# в проекте не задействована
+
+    def create_json(self, result):
         json_to_save = []
         pers_info = {}
-        for i, info in enumerate(List):
+        for num, info in enumerate(result):
             pers_info['id'] = info[0]
             pers_info['first_name'] = info[1]
             pers_info['last_name'] = info[2]
