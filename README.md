@@ -37,3 +37,5 @@
 - _Запустите файл main.py_
 
 #### _Для начала работы напишите "привет"_ ####
+
+![alt text](https://github.com/grinal82/VkinderBot/blob/main/DB.png?raw=true)
